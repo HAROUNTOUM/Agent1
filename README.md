@@ -59,3 +59,75 @@ The following diagram illustrates the workflow of this system, showing the inter
 <div style="text-align: center;">
   <img src="https://cf-courses-data.s3.us.cloud-object-storage.appdomain.cloud/Cbuc3z8N1_Ew2ESw199Slw/Workflow.png" alt="Workflow" style="width: 40%; height: 500px;">
 </div>
+
+
+---
+
+## Setup
+
+### Prerequisites
+- Python 3.11 or newer
+- [uv](https://docs.astral.sh/uv/) (Python package and project manager)
+- A free [Groq API key](https://console.groq.com/keys)
+
+### 1. Clone the repository
+```bash
+git clone https://github.com/YOUR_USERNAME/agent1.git
+cd agent1
+```
+
+### 2. Install uv (if you don't have it)
+```bash
+# macOS / Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Windows (PowerShell)
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+### 3. Install the dependencies
+```bash
+uv sync
+```
+This creates a `.venv` folder and installs everything listed in `pyproject.toml`, using the exact versions pinned in `uv.lock`.
+
+### 4. Add your API key
+Create a file named `.env` in the project root (next to `pyproject.toml`):
+```
+GROQ_API_KEY=your_key_here
+```
+No quotes and no spaces around the `=`. The `.env` file is listed in `.gitignore`, so your key is never uploaded.
+
+### 5. Run the app
+```bash
+uv run main.py
+```
+Open the local link printed in the terminal (usually `http://127.0.0.1:7860`) to use the Gradio chat interface.
+
+## Usage
+Type a request in the chat, for example:
+
+> Write a LinkedIn post on getting a software developer job at IBM under 160 characters
+
+The agent drafts the post, critiques it, and rewrites it several times. The final version is shown in the chat. Because each request makes several model calls, expect a few seconds of waiting.
+
+## Project structure
+```
+agent1/
+├── .env              # your API key (not committed)
+├── main.py           # Gradio chat interface
+├── graph.py          # LangGraph reflection loop (generate -> reflect -> generate)
+├── prompt.py         # generation and reflection prompts
+├── setup.py          # LLM configuration (Groq model)
+├── pyproject.toml    # project dependencies
+└── uv.lock           # pinned dependency versions
+```
+
+## Configuration
+- **Change the model:** edit the `model=` value where `ChatGroq` is created (`setup.py`). To list the models your key can access, call `https://api.groq.com/openai/v1/models`.
+- **Change the number of reflection rounds:** edit the `len(state) > 6` condition in `should_continue` in `graph.py`.
+
+## Troubleshooting
+- **`model_not_found` error:** Groq retires models regularly. Pick a current model ID from the [Groq models list](https://console.groq.com/docs/models).
+- **`429` error:** you hit the free-tier rate limit. Wait a minute and try again.
+- **API key not found:** check that `.env` is in the project root and the variable is named exactly `GROQ_API_KEY`.
